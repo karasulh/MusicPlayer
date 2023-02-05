@@ -1,0 +1,12 @@
+[package]
+name = "music_player"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gtk4 = "0.5.5"
+gio = "0.16.7"
+gdk-pixbuf = "0.16.7"
+id3 = "1.6.0"
