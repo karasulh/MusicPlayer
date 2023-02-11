@@ -1,5 +1,5 @@
 use gtk4::{prelude::*};
-use gtk4::{Button,Box};
+use gtk4::{Button};
 
 const PLAY_MUSIC: &str = "media-playback-start";
 const STOP_MUSIC: &str = "media-playback-stop";
@@ -16,16 +16,16 @@ pub struct MusicToolBox{
     pub stop_button: Button,
     pub next_button: Button,
     pub exit_button: Button,
-    pub toolbox: Box,
+    pub toolbox: gtk4::Box,
 }
 
 impl MusicToolBox{
     pub fn new() -> Self{
         
-        let toolbox= Box::new(gtk4::Orientation::Horizontal,30);
+        let toolbox= gtk4::Box::new(gtk4::Orientation::Horizontal,30);
     
         let open_button = Button::from_icon_name(DOCUMENT_OPEN);
-        open_button.connect_clicked(|button|{ button.set_label("Hello World");});
+        //open_button.connect_clicked(|button|{ button.set_label("Hello World");});
         toolbox.append(&open_button);
 
         //toolbox.append(&Separator::new(gtk4::Orientation::Vertical));
@@ -50,7 +50,7 @@ impl MusicToolBox{
         MusicToolBox { open_button, prev_button, play_button, stop_button, next_button, exit_button, toolbox}
     }
 
-    pub fn get_tool_box(&self) -> &Box{
+    pub fn get_tool_box(&self) -> &gtk4::Box{
         &self.toolbox
     }
 

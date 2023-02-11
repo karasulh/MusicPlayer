@@ -1,11 +1,33 @@
+use gdk_pixbuf::InterpType;
+use gdk_pixbuf::PixbufLoader;
+
+use gio::File;
 use gio::ListModel;
-use gio::ListStore; //new type
-//use gtk4::ListStore; //old type
+use gtk4::ApplicationWindow;
+use gtk4::TreeIter;
+
+//use gio::ListStore; //new type
+use gtk4::ListStore; //old type
+
+use gtk4::ffi::GTK_RESPONSE_ACCEPT;
+use gtk4::ffi::GTK_RESPONSE_CANCEL;
 use gtk4::{prelude::*,TreeView, TreeViewColumn,CellRendererText, CellRendererPixbuf,
     ColumnView,ColumnViewColumn, SingleSelection,SignalListItemFactory, ListItem, Image, Label};
+use gtk4::{FileChooserAction,FileChooserDialog,FileFilter,ResponseType};
 use gdk_pixbuf::{Pixbuf};
 use gtk4::glib::types::Type;
 use gtk4::glib::BoxedAnyObject;
+use id3::Tag;
+use id3::TagLike;
+
+use std::borrow::Borrow;
+use std::ops::Deref;
+use std::path::Path;
+use std::path::PathBuf;
+
+use std::cell::Ref;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 const THUMBNAIL_COLUMN: u32 = 0;
 const TITLE_COLUMN: u32 = 1;
@@ -26,55 +48,56 @@ enum Visibility{
     Invisible,
     Visible,
 }
-/* 
+
+
 pub struct Playlist{
     model: ListStore,
     treeview: TreeView,
 }
-*/
 
-
+/*
 pub struct Playlist{
     model: ListStore,
     treeview: ColumnView,
 }
 
-
 struct Row{
-    col1:Pixbuf,
+    // col1:Pixbuf,
     col2:String,
     col3:String,
     col4:String,
     col5:String,
     col6:String,
     col7:String,
-    col8:Pixbuf, 
+    col8:String,
+    // col9:Pixbuf, 
 }
+*/
+
 
 
 impl Playlist{
     pub fn new() -> Self{
-        /*
+        
         let list = [Pixbuf::static_type(),Type::STRING,Type::STRING,Type::STRING,Type::STRING,
         Type::STRING,Type::STRING,Type::STRING, Pixbuf::static_type()];
-        let model = ListStore::new(&list);
+        let model = gtk4::ListStore::new(&list);
         let treeview = TreeView::with_model(&model);
         treeview.set_hexpand(true);
         treeview.set_vexpand(true);
         Self::create_columns(&treeview);
         Playlist{model,treeview}
-        */
+        
 
-         
-        let store= ListStore::new(BoxedAnyObject::static_type());
+        /*
+        let store= gio::ListStore::new(BoxedAnyObject::static_type());
         let sel = SingleSelection::new(Some(&store));
         let columnview = ColumnView::new(Some(&sel));
         Self::create_columns(&columnview);
-
         Playlist { model:store, treeview:columnview }
-        
+        */
     }
-
+    /*
     fn create_columns(columnview:&ColumnView){
         Self::add_pixbuff_column(columnview,THUMBNAIL_COLUMN as i32,Visible);
         Self::add_text_column(columnview,"Title",TITLE_COLUMN as i32);
@@ -83,6 +106,7 @@ impl Playlist{
         Self::add_text_column(columnview,"Genre",GENRE_COLUMN as i32);
         Self::add_text_column(columnview,"Year",YEAR_COLUMN as i32);
         Self::add_text_column(columnview,"Track",TRACK_COLUMN as i32);
+        Self::add_text_column(columnview,"Path",PATH_COLUMN as i32);
         Self::add_pixbuff_column(columnview,PIXBUF_COLUMN as i32,Invisible);
     }
 
@@ -92,9 +116,16 @@ impl Playlist{
         let col = ColumnViewColumn::new(Some(title),Some(&colfactory));
         col.set_expand(true);
 
-        colfactory.connect_setup(|_factory,item|{
+        println!("AddTextColumn");
+
+        colfactory.connect_setup(move |_factory,item|{
             let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Text"));
+            let boxed = item.item().unwrap().downcast::<BoxedAnyObject>().unwrap();
+            let row : Ref<Row> = boxed.borrow();
+            //let label = Label::new(Some("Text"));
+            let label = Label::new(Some(&row.col3));
+            println!("{:?}",row.col3);
+            println!("AddTextColumnColFactory");
             item.set_child(Some(&label));
         });
 
@@ -109,7 +140,6 @@ impl Playlist{
             col.set_visible(true);
         }
         
-
         colfactory.connect_setup(|_factory,item|{
             let item = item.downcast_ref::<ListItem>().unwrap();
             let image = Image::new();
@@ -123,7 +153,108 @@ impl Playlist{
     pub fn view(&self) -> &ColumnView{
         &self.treeview
     }
-    /*
+
+    fn set_pixbuf(&self, row:&TreeIter, tag:&Tag){
+        if let Some(picture) = tag.pictures().next(){
+            let pixbuf_loader = PixbufLoader::new();
+            pixbuf_loader.set_size(IMAGE_SIZE,IMAGE_SIZE);
+            pixbuf_loader.write(&picture.data).unwrap();
+            if let Some(pixbuf) = pixbuf_loader.pixbuf(){
+                let thumbnail = pixbuf.scale_simple(THUMBNAIL_SIZE, THUMBNAIL_SIZE,InterpType::Nearest).unwrap();
+                //self.model.set_value(row, THUMBNAIL_COLUMN, &thumbnail.to_value());
+                //self.model.set_value(row, PIXBUF_COLUMN, &pixbuf.to_value());
+            }
+            pixbuf_loader.close().unwrap();
+        }
+    }
+
+    pub fn add(&self,path:&Path){
+        let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
+
+        if let Ok(tag) = Tag::read_from_path(path){
+            let title = tag.title().unwrap_or(filename);
+            let artist = tag.artist().unwrap_or("(no artist)");
+            let album = tag.album().unwrap_or("(no artist)");
+            let genre = tag.genre().unwrap_or("(no genre)");
+            let year = tag.year().map(|year| year.to_string()).unwrap_or("(no year)".to_string());
+            let track = tag.track().map(|track| track.to_string()).unwrap_or("??".to_string());
+            let total_tracks = tag.total_tracks().map(|total_tracks|total_tracks.to_string()).unwrap_or("??".to_string());
+            let track_value = format!("{} / {}",track,total_tracks);
+
+            //self.set_pixbuf(&row, &tag);
+            //self.model.set_value(&row,TITLE_COLUMN,&title.to_value());
+            // self.model.set_value(&row,ARTIST_COLUMN,&artist.to_value());
+            // self.model.set_value(&row,ALBUM_COLUMN,&album.to_value());
+            // self.model.set_value(&row,GENRE_COLUMN,&genre.to_value());
+            // self.model.set_value(&row,YEAR_COLUMN,&year.to_value());
+            // self.model.set_value(&row,TRACK_COLUMN,&track_value.to_value());
+            let itemx = Row{
+                col2:title.to_string(),
+                col3:artist.to_string(),
+                col4:album.to_string(),
+                col5:genre.to_string(),
+                col6:year.to_string(),
+                col7:track.to_string(),
+                col8:total_tracks.to_string()};
+            self.model.append(&BoxedAnyObject::new(itemx));
+        }
+        else{
+            // self.model.set_value(&row,TITLE_COLUMN,&filename.to_value());
+        }
+        let path = path.to_str().unwrap_or_default();
+        //self.model.set_value(&row, PATH_COLUMN, &path.to_value());
+
+        
+        //self.model.append(&BoxedAnyObject::new(Row{}));
+
+    }
+    */
+    
+    
+    pub fn add(&self,path:&Path){
+        let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
+        let row= self.model.append();
+
+        if let Ok(tag) = Tag::read_from_path(&path){
+            let title = tag.title().unwrap_or(filename);
+            let artist = tag.artist().unwrap_or("(no artist)");
+            let album = tag.album().unwrap_or("(no artist)");
+            let genre = tag.genre().unwrap_or("(no genre)");
+            let year = tag.year().map(|year| year.to_string()).unwrap_or("(no year)".to_string());
+            let track = tag.track().map(|track| track.to_string()).unwrap_or("??".to_string());
+            let total_tracks = tag.total_tracks().map(|total_tracks|total_tracks.to_string()).unwrap_or("??".to_string());
+            let track_value = format!("{} / {}",track,total_tracks);
+
+            self.set_pixbuf(&row, &tag);
+            self.model.set_value(&row,TITLE_COLUMN,&title.to_value());
+            self.model.set_value(&row,ARTIST_COLUMN,&artist.to_value());
+            self.model.set_value(&row,ALBUM_COLUMN,&album.to_value());
+            self.model.set_value(&row,GENRE_COLUMN,&genre.to_value());
+            self.model.set_value(&row,YEAR_COLUMN,&year.to_value());
+            self.model.set_value(&row,TRACK_COLUMN,&track_value.to_value());
+        }
+        else{
+            self.model.set_value(&row,TITLE_COLUMN,&filename.to_value());
+        }
+        let path = path.to_str().unwrap_or_default();
+        self.model.set_value(&row, PATH_COLUMN, &path.to_value());
+    }
+
+    
+    fn set_pixbuf(&self, row:&TreeIter, tag:&Tag){
+        if let Some(picture) = tag.pictures().next(){
+            let pixbuf_loader = PixbufLoader::new();
+            pixbuf_loader.set_size(IMAGE_SIZE,IMAGE_SIZE);
+            pixbuf_loader.write(&picture.data).unwrap();
+            if let Some(pixbuf) = pixbuf_loader.pixbuf(){
+                let thumbnail = pixbuf.scale_simple(THUMBNAIL_SIZE, THUMBNAIL_SIZE,InterpType::Nearest).unwrap();
+                self.model.set_value(row, THUMBNAIL_COLUMN, &thumbnail.to_value());
+                self.model.set_value(row, PIXBUF_COLUMN, &pixbuf.to_value());
+            }
+            pixbuf_loader.close().unwrap();
+        }
+    }
+    
     fn create_columns(treeview:&TreeView){
         Self::add_pixbuff_column(treeview,THUMBNAIL_COLUMN as i32,Visible);
         Self::add_text_column(treeview,"Title",TITLE_COLUMN as i32);
@@ -159,7 +290,7 @@ impl Playlist{
     pub fn view(&self) -> &TreeView{
         &self.treeview
     }
-    */
+    
    
 }
 
