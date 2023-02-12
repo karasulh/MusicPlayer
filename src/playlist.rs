@@ -6,8 +6,8 @@ use gio::ListModel;
 use gtk4::ApplicationWindow;
 use gtk4::TreeIter;
 
-//use gio::ListStore; //new type
-use gtk4::ListStore; //old type
+use gio::ListStore; //new type
+//use gtk4::ListStore; //old type
 
 use gtk4::ffi::GTK_RESPONSE_ACCEPT;
 use gtk4::ffi::GTK_RESPONSE_CANCEL;
@@ -49,36 +49,38 @@ enum Visibility{
     Visible,
 }
 
-
+/*
 pub struct Playlist{
     model: ListStore,
     treeview: TreeView,
 }
+*/
 
-/*
+
 pub struct Playlist{
     model: ListStore,
     treeview: ColumnView,
 }
 
+#[derive(Debug)]
 struct Row{
-    // col1:Pixbuf,
-    col2:String,
-    col3:String,
-    col4:String,
-    col5:String,
-    col6:String,
-    col7:String,
-    col8:String,
-    // col9:Pixbuf, 
+    //col_thumbnail:Pixbuf,
+    col_thumbnail:Image,
+    col_title:String,
+    col_artist:String,
+    col_album:String,
+    col_genre:String,
+    col_year:String,
+    col_track:String,
+    col_path:String,
+    col_pixbuf:Image, 
+    //col_pixbuf:Pixbuf, 
 }
-*/
-
 
 
 impl Playlist{
     pub fn new() -> Self{
-        
+        /*
         let list = [Pixbuf::static_type(),Type::STRING,Type::STRING,Type::STRING,Type::STRING,
         Type::STRING,Type::STRING,Type::STRING, Pixbuf::static_type()];
         let model = gtk4::ListStore::new(&list);
@@ -87,63 +89,78 @@ impl Playlist{
         treeview.set_vexpand(true);
         Self::create_columns(&treeview);
         Playlist{model,treeview}
-        
+        */
 
-        /*
+        
         let store= gio::ListStore::new(BoxedAnyObject::static_type());
         let sel = SingleSelection::new(Some(&store));
         let columnview = ColumnView::new(Some(&sel));
         Self::create_columns(&columnview);
         Playlist { model:store, treeview:columnview }
-        */
+        
     }
-    /*
+    
     fn create_columns(columnview:&ColumnView){
-        Self::add_pixbuff_column(columnview,THUMBNAIL_COLUMN as i32,Visible);
-        Self::add_text_column(columnview,"Title",TITLE_COLUMN as i32);
-        Self::add_text_column(columnview,"Artist",ARTIST_COLUMN as i32);
-        Self::add_text_column(columnview,"Album",ALBUM_COLUMN as i32);
-        Self::add_text_column(columnview,"Genre",GENRE_COLUMN as i32);
-        Self::add_text_column(columnview,"Year",YEAR_COLUMN as i32);
-        Self::add_text_column(columnview,"Track",TRACK_COLUMN as i32);
-        Self::add_text_column(columnview,"Path",PATH_COLUMN as i32);
-        Self::add_pixbuff_column(columnview,PIXBUF_COLUMN as i32,Invisible);
+        Self::add_pixbuff_column(columnview,THUMBNAIL_COLUMN as u32,Visible);
+        Self::add_text_column(columnview,"Title",TITLE_COLUMN as u32);
+        Self::add_text_column(columnview,"Artist",ARTIST_COLUMN as u32);
+        Self::add_text_column(columnview,"Album",ALBUM_COLUMN as u32);
+        Self::add_text_column(columnview,"Genre",GENRE_COLUMN as u32);
+        Self::add_text_column(columnview,"Year",YEAR_COLUMN as u32);
+        Self::add_text_column(columnview,"Track",TRACK_COLUMN as u32);
+        Self::add_text_column(columnview,"Path",PATH_COLUMN as u32);
+        Self::add_pixbuff_column(columnview,PIXBUF_COLUMN as u32,Invisible);
     }
 
     //CellRenderer use to indicate how the data from the model should be rendered in the view
-    fn add_text_column(columnview:&ColumnView,title:&str,columnId:i32){
+    fn add_text_column(columnview:&ColumnView,title:&str,column_id:u32){
         let colfactory = SignalListItemFactory::new();
         let col = ColumnViewColumn::new(Some(title),Some(&colfactory));
         col.set_expand(true);
 
-        println!("AddTextColumn");
-
-        colfactory.connect_setup(move |_factory,item|{
+        colfactory.connect_bind(move |_factory,item|{
             let item = item.downcast_ref::<ListItem>().unwrap();
             let boxed = item.item().unwrap().downcast::<BoxedAnyObject>().unwrap();
             let row : Ref<Row> = boxed.borrow();
-            //let label = Label::new(Some("Text"));
-            let label = Label::new(Some(&row.col3));
-            println!("{:?}",row.col3);
-            println!("AddTextColumnColFactory");
+            let column_of_row = match column_id{
+                TITLE_COLUMN => row.col_title.clone(),
+                ARTIST_COLUMN => row.col_artist.clone(),
+                ALBUM_COLUMN => row.col_album.clone(),
+                GENRE_COLUMN=> row.col_genre.clone(),
+                YEAR_COLUMN => row.col_year.clone(),
+                TRACK_COLUMN => row.col_track.clone(),
+                PATH_COLUMN => row.col_path.clone(),
+                _ => String::from(""),
+            };
+            let label = Label::new(Some(&column_of_row));
             item.set_child(Some(&label));
         });
 
         columnview.append_column(&col);
     }
 
-    fn add_pixbuff_column(columnview:&ColumnView,columnId:i32,visibility:Visibility){
+    fn add_pixbuff_column(columnview:&ColumnView,column_id:u32,visibility:Visibility){
         let colfactory = SignalListItemFactory::new();
         let col = ColumnViewColumn::new(Some("Pixbuff"),Some(&colfactory));
         col.set_expand(true);
-        if visibility==Visible{
-            col.set_visible(true);
+        if visibility==Invisible {
+            col.set_visible(false);
         }
         
-        colfactory.connect_setup(|_factory,item|{
+        colfactory.connect_bind(move |_factory,item|{
             let item = item.downcast_ref::<ListItem>().unwrap();
-            let image = Image::new();
-            item.set_child(Some(&image));
+            let boxed = item.item().unwrap().downcast::<BoxedAnyObject>().unwrap();
+            let row : Ref<Row> = boxed.borrow();
+
+            let image;
+            if column_id == THUMBNAIL_COLUMN{
+                image = &row.col_thumbnail;
+                item.set_child(Some(image));
+            }
+            else if column_id == PIXBUF_COLUMN{
+                image = &row.col_pixbuf;
+                item.set_child(Some(image));
+            }
         });
 
         columnview.append_column(&col);
@@ -154,13 +171,15 @@ impl Playlist{
         &self.treeview
     }
 
-    fn set_pixbuf(&self, row:&TreeIter, tag:&Tag){
+    fn set_pixbuf(&self, item_row:&mut Row, tag:&Tag){
         if let Some(picture) = tag.pictures().next(){
             let pixbuf_loader = PixbufLoader::new();
             pixbuf_loader.set_size(IMAGE_SIZE,IMAGE_SIZE);
             pixbuf_loader.write(&picture.data).unwrap();
             if let Some(pixbuf) = pixbuf_loader.pixbuf(){
                 let thumbnail = pixbuf.scale_simple(THUMBNAIL_SIZE, THUMBNAIL_SIZE,InterpType::Nearest).unwrap();
+                item_row.col_thumbnail.set_from_pixbuf(Some(&thumbnail));
+                item_row.col_pixbuf.set_from_pixbuf(Some(&pixbuf));
                 //self.model.set_value(row, THUMBNAIL_COLUMN, &thumbnail.to_value());
                 //self.model.set_value(row, PIXBUF_COLUMN, &pixbuf.to_value());
             }
@@ -169,6 +188,18 @@ impl Playlist{
     }
 
     pub fn add(&self,path:&Path){
+
+        let mut music_item_for_one_row = Row{
+            col_thumbnail: Image::new(),
+            col_title : String::from(""),
+            col_artist: String::from(""),
+            col_album: String::from(""),
+            col_genre: String::from(""),
+            col_year: String::from(""),
+            col_track: String::from(""),
+            col_path: String::from(""),
+            col_pixbuf: Image::new(),
+        };
         let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
 
         if let Ok(tag) = Tag::read_from_path(path){
@@ -181,36 +212,27 @@ impl Playlist{
             let total_tracks = tag.total_tracks().map(|total_tracks|total_tracks.to_string()).unwrap_or("??".to_string());
             let track_value = format!("{} / {}",track,total_tracks);
 
-            //self.set_pixbuf(&row, &tag);
-            //self.model.set_value(&row,TITLE_COLUMN,&title.to_value());
-            // self.model.set_value(&row,ARTIST_COLUMN,&artist.to_value());
-            // self.model.set_value(&row,ALBUM_COLUMN,&album.to_value());
-            // self.model.set_value(&row,GENRE_COLUMN,&genre.to_value());
-            // self.model.set_value(&row,YEAR_COLUMN,&year.to_value());
-            // self.model.set_value(&row,TRACK_COLUMN,&track_value.to_value());
-            let itemx = Row{
-                col2:title.to_string(),
-                col3:artist.to_string(),
-                col4:album.to_string(),
-                col5:genre.to_string(),
-                col6:year.to_string(),
-                col7:track.to_string(),
-                col8:total_tracks.to_string()};
-            self.model.append(&BoxedAnyObject::new(itemx));
+            self.set_pixbuf(&mut music_item_for_one_row, &tag);
+
+            music_item_for_one_row.col_title = title.to_string();
+            music_item_for_one_row.col_artist = artist.to_string();
+            music_item_for_one_row.col_album = album.to_string();
+            music_item_for_one_row.col_genre = genre.to_string();
+            music_item_for_one_row.col_year = year.to_string();
+            music_item_for_one_row.col_track = track.to_string();
+
         }
         else{
-            // self.model.set_value(&row,TITLE_COLUMN,&filename.to_value());
+            music_item_for_one_row.col_title = filename.to_string();
         }
         let path = path.to_str().unwrap_or_default();
-        //self.model.set_value(&row, PATH_COLUMN, &path.to_value());
+        music_item_for_one_row.col_path = path.to_string();
 
-        
-        //self.model.append(&BoxedAnyObject::new(Row{}));
-
+        self.model.append(&BoxedAnyObject::new(music_item_for_one_row));
     }
-    */
     
     
+    /*
     pub fn add(&self,path:&Path){
         let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
         let row= self.model.append();
@@ -290,94 +312,7 @@ impl Playlist{
     pub fn view(&self) -> &TreeView{
         &self.treeview
     }
-    
+    */
    
 }
 
-
-       /*
-        let col1factory = SignalListItemFactory::new();
-        let col2factory = SignalListItemFactory::new();
-        let col3factory = SignalListItemFactory::new();
-        let col4factory = SignalListItemFactory::new();
-        let col5factory = SignalListItemFactory::new();
-        let col6factory = SignalListItemFactory::new();
-        let col7factory = SignalListItemFactory::new();
-        let col8factory = SignalListItemFactory::new();
-
-        
-        let col1 = ColumnViewColumn::new(Some("Thumbnail"),Some(&col1factory));
-        let col2 = ColumnViewColumn::new(Some("Title"),Some(&col2factory));
-        let col3 = ColumnViewColumn::new(Some("Artist"),Some(&col3factory));
-        let col4 = ColumnViewColumn::new(Some("Album"),Some(&col4factory));
-        let col5 = ColumnViewColumn::new(Some("Genre"),Some(&col5factory));
-        let col6 = ColumnViewColumn::new(Some("Year"),Some(&col6factory));
-        let col7 = ColumnViewColumn::new(Some("Track"),Some(&col7factory));
-        let col8 = ColumnViewColumn::new(Some("Pixbuf"),Some(&col8factory));
-        col2.set_expand(true);
-        col3.set_expand(true);
-        col4.set_expand(true);
-        col5.set_expand(true);
-        col6.set_expand(true);
-        col7.set_expand(true);
-
-
-        col1factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let image = Image::new();
-            item.set_child(Some(&image));
-        });
-
-        col2factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col3factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col4factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col5factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col6factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col7factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let label = Label::new(Some("Title2"));
-            item.set_child(Some(&label));
-        });
-
-        col8factory.connect_setup(|_factory,item|{
-            let item = item.downcast_ref::<ListItem>().unwrap();
-            let image = Image::new();
-            item.set_child(Some(&image));
-        });
-
-        col1.set_visible(true);
-        col8.set_visible(false);
-        columnview.append_column(&col1);
-        columnview.append_column(&col2);
-        columnview.append_column(&col3);
-        columnview.append_column(&col4);
-        columnview.append_column(&col5);
-        columnview.append_column(&col6);
-        columnview.append_column(&col7);
-        columnview.append_column(&col8);
-        */
