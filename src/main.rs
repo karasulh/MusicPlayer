@@ -20,7 +20,6 @@ use gtk4::glib;
 use gtk4::glib::closure_local;
 
 
-
 const PLAY_MUSIC: &str = "media-playback-start";
 const PAUSE_MUSIC: &str = "media-playback-pause";
 
