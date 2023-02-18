@@ -37,18 +37,18 @@ fn build_ui(app: &Application){
     let window = ApplicationWindow::builder().application(app).title("My Music Player").build();
     let musictoolbox = MusicToolBox::new();
     let playlist = Rc::new(Playlist::new());
+    let cover = Image::new();
     
     //let playlist2 = Rc::clone(&playlist);
-    connect_toolbox_events(&window,&musictoolbox,&playlist);
+    connect_toolbox_events(&window,&musictoolbox,&playlist,&cover);
 
     let vert_box= Box::new(gtk4::Orientation::Vertical,5);
 
     vert_box.append(musictoolbox.get_tool_box());
 
-    let music_image = Image::new();
-    music_image.set_from_file(Some("image.jpg"));
-    music_image.set_pixel_size(250);
-    vert_box.append(&music_image);
+    cover.set_from_file(Some("image.jpg"));
+    cover.set_pixel_size(250);
+    vert_box.append(&cover);
 
     let adjustment = Adjustment::new(0.0,0.0,10.0,0.0,0.0,0.0);
     let scale = Scale::new(Orientation::Horizontal,Some(&adjustment));
@@ -63,25 +63,35 @@ fn build_ui(app: &Application){
 
 
     
-fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolBox,playlist:&Rc<Playlist> /*&Rc<Playlist>*/){
+fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolBox,playlist:&Rc<Playlist>,cover:&Image){
     //connect_clicked wants a function with static lifetime so by using 'move', we satifsy this, that is why we clone the variable.
     let window_copy = window.clone();
     musictoolbox.exit_button.connect_clicked(move|_|{window_copy.destroy();}); 
 
+    let playlist_copy = Rc::clone(&playlist);
+    let cover_copy = cover.clone();
     let play_button = musictoolbox.play_button.clone(); //copy of the pointer of button
     musictoolbox.play_button.connect_clicked( move|_|{
         if play_button.icon_name().unwrap() == GString::from(PLAY_MUSIC.to_string()){
             play_button.set_icon_name(PAUSE_MUSIC);  
+            set_cover(&cover_copy, &playlist_copy);
         }    
         else{
             play_button.set_icon_name(PLAY_MUSIC);
         }    
     });
+
     let parent = window.clone();
     let playlist_copy = Rc::clone(&playlist);
     musictoolbox.open_button.connect_clicked(move|_|{
         show_open_dialog(&parent ,&playlist_copy)
     });   
+
+    let playlist_copy = Rc::clone(&playlist);
+    musictoolbox.remove_button.connect_clicked(move|_|{
+        playlist_copy.remove_selection();
+    });
+
 }
 
 fn show_open_dialog(parent: &ApplicationWindow ,playlist: &Rc<Playlist>){
@@ -101,11 +111,20 @@ fn show_open_dialog(parent: &ApplicationWindow ,playlist: &Rc<Playlist>){
         if response == ResponseType::Accept{       
             if let Some(path) = dialog.file().unwrap().path(){
                 (*playlist_copy).add(path.as_path());
-                println!("{:?}",path.as_path());
             }
         }
         dialog.destroy();
     });
+}
+
+fn set_cover(cover: &Image, playlist: &Rc<Playlist>){
+    if let Some(image) = playlist.get_image(){
+        cover.set_from_paintable(image.paintable().as_ref());
+    }
+    else{
+        cover.set_from_file(Some("image.jpg"));
+        cover.set_pixel_size(250);
+    }
 }
     
     

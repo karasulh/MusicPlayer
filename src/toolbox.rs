@@ -7,7 +7,7 @@ const DOCUMENT_OPEN: &str = "document-open";
 const GO_PREVIOUS: &str = "go-previous";
 const GO_NEXT: &str = "go-next";
 const WINDOW_CLOSE: &str = "window-close";
-
+const LIST_REMOVE: &str = "list-remove";
 
 pub struct MusicToolBox{
     pub open_button: Button,
@@ -15,6 +15,7 @@ pub struct MusicToolBox{
     pub play_button: Button,
     pub stop_button: Button,
     pub next_button: Button,
+    pub remove_button: Button,
     pub exit_button: Button,
     pub toolbox: gtk4::Box,
 }
@@ -25,10 +26,8 @@ impl MusicToolBox{
         let toolbox= gtk4::Box::new(gtk4::Orientation::Horizontal,30);
     
         let open_button = Button::from_icon_name(DOCUMENT_OPEN);
-        //open_button.connect_clicked(|button|{ button.set_label("Hello World");});
         toolbox.append(&open_button);
 
-        //toolbox.append(&Separator::new(gtk4::Orientation::Vertical));
         let prev_button = Button::from_icon_name(GO_PREVIOUS);
         prev_button.connect_clicked(|button|{ button.set_label("Hello World2");});
         toolbox.append(&prev_button); 
@@ -44,10 +43,13 @@ impl MusicToolBox{
         next_button.connect_clicked(|button|{ button.set_label("Hello World5");});
         toolbox.append(&next_button); 
 
+        let remove_button = Button::from_icon_name(LIST_REMOVE);
+        toolbox.append(&remove_button); 
+
         let exit_button = Button::from_icon_name(WINDOW_CLOSE);
         toolbox.append(&exit_button); 
 
-        MusicToolBox { open_button, prev_button, play_button, stop_button, next_button, exit_button, toolbox}
+        MusicToolBox { open_button, prev_button, play_button, stop_button, next_button, remove_button ,exit_button, toolbox}
     }
 
     pub fn get_tool_box(&self) -> &gtk4::Box{

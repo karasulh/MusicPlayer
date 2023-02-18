@@ -4,6 +4,7 @@ use gdk_pixbuf::PixbufLoader;
 use gio::File;
 use gio::ListModel;
 use gtk4::ApplicationWindow;
+use gtk4::BitsetIter;
 use gtk4::TreeIter;
 
 use gio::ListStore; //new type
@@ -11,6 +12,9 @@ use gio::ListStore; //new type
 
 use gtk4::ffi::GTK_RESPONSE_ACCEPT;
 use gtk4::ffi::GTK_RESPONSE_CANCEL;
+use gtk4::ffi::GtkBitset;
+use gtk4::ffi::gtk_bitset_iter_init_at;
+use gtk4::ffi::gtk_bitset_iter_init_first;
 use gtk4::{prelude::*,TreeView, TreeViewColumn,CellRendererText, CellRendererPixbuf,
     ColumnView,ColumnViewColumn, SingleSelection,SignalListItemFactory, ListItem, Image, Label};
 use gtk4::{FileChooserAction,FileChooserDialog,FileFilter,ResponseType};
@@ -231,8 +235,35 @@ impl Playlist{
         self.model.append(&BoxedAnyObject::new(music_item_for_one_row));
     }
     
+    pub fn remove_selection(&self){
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let sel_pos = selection.selected();
+            self.model.remove(sel_pos);
+        }
+    }
+
+    pub fn get_image(&self) -> Option<Image>{
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let sel_pos = selection.selected();
+            let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
+            let row:Ref<Row> = boxed.borrow();
+            let image = row.col_pixbuf.clone();
+           return Some(image)
+        }
+        None
+    }
     
     /*
+
+    pub fn remove_selection(&self){
+        let selection = self.treeview.get_selection();
+        if let Some((,iter)) = selection.get_selected(){
+            self.model.remove(&iter);
+        }
+    }
+
     pub fn add(&self,path:&Path){
         let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
         let row= self.model.append();
