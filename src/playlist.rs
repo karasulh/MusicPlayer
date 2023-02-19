@@ -116,7 +116,6 @@ impl Playlist{
         Self::add_pixbuff_column(columnview,PIXBUF_COLUMN as u32,Invisible);
     }
 
-    //CellRenderer use to indicate how the data from the model should be rendered in the view
     fn add_text_column(columnview:&ColumnView,title:&str,column_id:u32){
         let colfactory = SignalListItemFactory::new();
         let col = ColumnViewColumn::new(Some(title),Some(&colfactory));

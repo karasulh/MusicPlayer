@@ -4,6 +4,10 @@ use toolbox::MusicToolBox;
 mod playlist;
 use playlist::Playlist;
 
+mod mp3;
+
+mod player;
+
 use gtk4::{prelude::*, Image, Orientation,Box, Adjustment, Scale, Application, ApplicationWindow};
 use gtk4::glib::GString;
 
@@ -17,7 +21,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use gtk4::glib::clone;
 use gtk4::glib;
-use gtk4::glib::closure_local;
 
 
 const PLAY_MUSIC: &str = "media-playback-start";

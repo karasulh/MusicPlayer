@@ -41,7 +41,7 @@ dependencies = [
  "bitflags",
  "cairo-sys-rs",
  "glib",
- "libc",
+ "libc 0.2.139",
  "once_cell",
  "thiserror",
 ]
@@ -53,7 +53,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c48f4af05fabdcfa9658178e1326efa061853f040ce7d72e33af6885196f421"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.139",
  "system-deps",
 ]
 
@@ -82,12 +82,79 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2801af0d36612ae591caa9568261fddce32ce6e08a7275ea334a06a4ad021a2c"
+dependencies = [
+ "cfg-if",
+ "crossbeam-channel",
+ "crossbeam-deque",
+ "crossbeam-epoch",
+ "crossbeam-queue",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-channel"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2dd04ddaf88237dc3b8d8f9a3c1004b506b54b3313403944054d23c0870c521"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-deque"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "715e8152b692bba2d374b53d4875445368fdf21a94751410af607a5ac677d1fc"
+dependencies = [
+ "cfg-if",
+ "crossbeam-epoch",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-epoch"
+version = "0.9.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01a9af1f4c2ef74bb8aa1f7e19706bc72d03598c8a570bb5de72243c7a9d9d5a"
+dependencies = [
+ "autocfg",
+ "cfg-if",
+ "crossbeam-utils",
+ "memoffset 0.7.1",
+ "scopeguard",
+]
+
+[[package]]
+name = "crossbeam-queue"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1cfb3ea8a53f37c40dea2c7bedcbd88bdfae54f5e2175d6ecaff1c988353add"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-utils"
+version = "0.8.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fb766fa798726286dbbb842f174001dab8abc7b627a1dd86e0b7222a95d929f"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "field-offset"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e1c54951450cbd39f3dbcf1005ac413b49487dabf18a720ad2383eccfeffb92"
 dependencies = [
- "memoffset",
+ "memoffset 0.6.5",
  "rustc_version",
 ]
 
@@ -165,6 +232,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "gcc"
+version = "0.3.55"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
+
+[[package]]
 name = "gdk-pixbuf"
 version = "0.16.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -174,7 +247,7 @@ dependencies = [
  "gdk-pixbuf-sys",
  "gio",
  "glib",
- "libc",
+ "libc 0.2.139",
 ]
 
 [[package]]
@@ -186,7 +259,7 @@ dependencies = [
  "gio-sys",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.139",
  "system-deps",
 ]
 
@@ -202,7 +275,7 @@ dependencies = [
  "gdk4-sys",
  "gio",
  "glib",
- "libc",
+ "libc 0.2.139",
  "pango",
 ]
 
@@ -217,7 +290,7 @@ dependencies = [
  "gio-sys",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.139",
  "pango-sys",
  "pkg-config",
  "system-deps",
@@ -236,7 +309,7 @@ dependencies = [
  "futures-util",
  "gio-sys",
  "glib",
- "libc",
+ "libc 0.2.139",
  "once_cell",
  "pin-project-lite",
  "smallvec",
@@ -251,7 +324,7 @@ checksum = "e9b693b8e39d042a95547fc258a7b07349b1f0b48f4b2fa3108ba3c51c0b5229"
 dependencies = [
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.139",
  "system-deps",
  "winapi",
 ]
@@ -272,7 +345,7 @@ dependencies = [
  "glib-macros",
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.139",
  "once_cell",
  "smallvec",
  "thiserror",
@@ -299,7 +372,7 @@ version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c61a4f46316d06bfa33a7ac22df6f0524c8be58e3db2d9ca99ccb1f357b62a65"
 dependencies = [
- "libc",
+ "libc 0.2.139",
  "system-deps",
 ]
 
@@ -310,7 +383,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3520bb9c07ae2a12c7f2fbb24d4efc11231c8146a86956413fb1a79bb760a0f1"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.139",
  "system-deps",
 ]
 
@@ -322,7 +395,7 @@ checksum = "95ecb4d347e6d09820df3bdfd89a74a8eec07753a06bb92a3aac3ad31d04447b"
 dependencies = [
  "glib",
  "graphene-sys",
- "libc",
+ "libc 0.2.139",
 ]
 
 [[package]]
@@ -332,7 +405,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9aa82337d3972b4eafdea71e607c23f47be6f27f749aab613f1ad8ddbe6dcd6"
 dependencies = [
  "glib-sys",
- "libc",
+ "libc 0.2.139",
  "pkg-config",
  "system-deps",
 ]
@@ -349,7 +422,7 @@ dependencies = [
  "glib",
  "graphene-rs",
  "gsk4-sys",
- "libc",
+ "libc 0.2.139",
  "pango",
 ]
 
@@ -364,7 +437,7 @@ dependencies = [
  "glib-sys",
  "gobject-sys",
  "graphene-sys",
- "libc",
+ "libc 0.2.139",
  "pango-sys",
  "system-deps",
 ]
@@ -387,7 +460,7 @@ dependencies = [
  "gsk4",
  "gtk4-macros",
  "gtk4-sys",
- "libc",
+ "libc 0.2.139",
  "once_cell",
  "pango",
 ]
@@ -420,7 +493,7 @@ dependencies = [
  "gobject-sys",
  "graphene-sys",
  "gsk4-sys",
- "libc",
+ "libc 0.2.139",
  "pango-sys",
  "system-deps",
 ]
@@ -444,15 +517,53 @@ dependencies = [
 
 [[package]]
 name = "libc"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e32a70cf75e5846d53a673923498228bbec6a8624708a9ea5645f075d6276122"
+
+[[package]]
+name = "libc"
 version = "0.2.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
+
+[[package]]
+name = "libpulse-simple-sys"
+version = "1.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "84e423d9c619c908ce9b4916080e65ab586ca55b8c4939379f15e6e72fb43842"
+dependencies = [
+ "libpulse-sys",
+ "pkg-config",
+]
+
+[[package]]
+name = "libpulse-sys"
+version = "1.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2191e6880818d1df4cf72eac8e91dce7a5a52ba0da4b2a5cdafabc22b937eadb"
+dependencies = [
+ "libc 0.2.139",
+ "num-derive",
+ "num-traits",
+ "pkg-config",
+ "winapi",
+]
 
 [[package]]
 name = "memoffset"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
+name = "memoffset"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
 dependencies = [
  "autocfg",
 ]
@@ -470,10 +581,33 @@ dependencies = [
 name = "music_player"
 version = "0.1.0"
 dependencies = [
+ "crossbeam",
  "gdk-pixbuf",
  "gio",
  "gtk4",
  "id3",
+ "pulse-simple",
+ "simplemad",
+]
+
+[[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "num-traits"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "578ede34cf02f8924ab9447f50c28075b4d3e5b269972345e7e0372b38c6cdcd"
+dependencies = [
+ "autocfg",
 ]
 
 [[package]]
@@ -491,7 +625,7 @@ dependencies = [
  "bitflags",
  "gio",
  "glib",
- "libc",
+ "libc 0.2.139",
  "once_cell",
  "pango-sys",
 ]
@@ -504,7 +638,7 @@ checksum = "9e134909a9a293e04d2cc31928aa95679c5e4df954d0b85483159bd20d8f047f"
 dependencies = [
  "glib-sys",
  "gobject-sys",
- "libc",
+ "libc 0.2.139",
  "system-deps",
 ]
 
@@ -581,6 +715,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulse-simple"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "846332afcb040c3c781ff4e4c3b1e3952e8ddcb6f2b3be46125981d233e02d05"
+dependencies = [
+ "libc 0.2.139",
+ "libpulse-simple-sys",
+ "libpulse-sys",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -597,6 +742,12 @@ checksum = "f0dfe2087c51c460008730de8b57e6a320782fbfb312e1f4d520e6c6fae155ee"
 dependencies = [
  "semver",
 ]
+
+[[package]]
+name = "scopeguard"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "semver"
@@ -621,6 +772,26 @@ name = "serde"
 version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb7d1f0d3021d347a83e556fc4683dea2ea09d87bccdf88ff5c12545d89d5efb"
+
+[[package]]
+name = "simplemad"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43666866971bfbcc14e993d587281df51ff45b6112aa3e5dd5ba43cfca6b5864"
+dependencies = [
+ "simplemad_sys",
+]
+
+[[package]]
+name = "simplemad_sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "565b6d70beb805ccb510a7f85c584418fcc4193de027414aff65c06ce0d693a7"
+dependencies = [
+ "gcc",
+ "libc 0.1.12",
+ "pkg-config",
+]
 
 [[package]]
 name = "slab"
