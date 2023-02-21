@@ -23,5 +23,13 @@ struct EventLoop {
     queue: Arc<SegQueue<Action>>,
     playing: Arc<Mutex<bool>>,
 }
+//Before starting, some nodes for concurrency in Rust:
+//Send and Sync traits prevent us from doing data races. A type implements the Send trait is safe to be sent to another thread.
+//For example, Rc doesnot implement Send trait, so it couldnot be used with threads.
+//Instead, Arc could be used with threads because it is for atomic operations.
+//A  type implements the Sync trait is safe to be shared with multiple threads.
+//For example, Mutex implements Sync trait, so it satisfies mutually exclusive.
 
-
+//For SegQueue, we can say that it uses atomic operations and it is lock-free data structures, so we dont need to use Mutex 
+//to mutate this value in mutable threads at the same time 
+//but we still need to wrap this queue in an Arc to be able to share it with multiple threads. //by Rust Programming By Example(Packt Publishing,2018)
