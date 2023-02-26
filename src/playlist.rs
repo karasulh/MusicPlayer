@@ -33,6 +33,10 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use std::sync::{Arc,Mutex};
+use crate::player::Player;
+use crate::State;
+
 const THUMBNAIL_COLUMN: u32 = 0;
 const TITLE_COLUMN: u32 = 1;
 const ARTIST_COLUMN: u32 = 2;
@@ -64,6 +68,7 @@ pub struct Playlist{
 pub struct Playlist{
     model: ListStore,
     treeview: ColumnView,
+    player:Player,
 }
 
 #[derive(Debug)]
@@ -81,9 +86,10 @@ struct Row{
     //col_pixbuf:Pixbuf, 
 }
 
-
+//We use pub(crate) syntax to silent an error. Since State is private type and is used in public method, compiler throws an error.
+//This guarantees the function is public to the other modules of the crate, but other crates cannot access it.
 impl Playlist{
-    pub fn new() -> Self{
+    pub(crate) fn new(state: Arc<Mutex<State>>) -> Self{
         /*
         let list = [Pixbuf::static_type(),Type::STRING,Type::STRING,Type::STRING,Type::STRING,
         Type::STRING,Type::STRING,Type::STRING, Pixbuf::static_type()];
@@ -100,7 +106,7 @@ impl Playlist{
         let sel = SingleSelection::new(Some(&store));
         let columnview = ColumnView::new(Some(&sel));
         Self::create_columns(&columnview);
-        Playlist { model:store, treeview:columnview }
+        Playlist { model:store, treeview:columnview, player:Player::new(state.clone())}
         
     }
     

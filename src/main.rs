@@ -22,9 +22,17 @@ use std::rc::Rc;
 use gtk4::glib::clone;
 use gtk4::glib;
 
+use std::sync::{Arc,Mutex};
+
 
 const PLAY_MUSIC: &str = "media-playback-start";
 const PAUSE_MUSIC: &str = "media-playback-pause";
+
+struct State{
+    stopped: bool,
+}
+
+//RAII: Resource Acquisition Is Initialization: Resource is allocated in cosntructor, released in descructor.
 
 fn main(){
     
@@ -39,8 +47,10 @@ fn build_ui(app: &Application){
 
     let window = ApplicationWindow::builder().application(app).title("My Music Player").build();
     let musictoolbox = MusicToolBox::new();
-    let playlist = Rc::new(Playlist::new());
+    let state: Arc<Mutex<State>> = Arc::new(Mutex::new(State{stopped:true}));
+    let playlist = Rc::new(Playlist::new(state.clone()));
     let cover = Image::new();
+
     
     //let playlist2 = Rc::clone(&playlist);
     connect_toolbox_events(&window,&musictoolbox,&playlist,&cover);
