@@ -29,18 +29,15 @@ impl MusicToolBox{
         toolbox.append(&open_button);
 
         let prev_button = Button::from_icon_name(GO_PREVIOUS);
-        prev_button.connect_clicked(|button|{ button.set_label("Hello World2");});
         toolbox.append(&prev_button); 
 
         let play_button = Button::from_icon_name(PLAY_MUSIC);
         toolbox.append(&play_button);
 
         let stop_button = Button::from_icon_name(STOP_MUSIC);
-        stop_button.connect_clicked(|button|{ button.set_label("Hello World4");});
         toolbox.append(&stop_button);
 
         let next_button = Button::from_icon_name(GO_NEXT);
-        next_button.connect_clicked(|button|{ button.set_label("Hello World5");});
         toolbox.append(&next_button); 
 
         let remove_button = Button::from_icon_name(LIST_REMOVE);

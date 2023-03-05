@@ -272,6 +272,49 @@ impl Playlist{
         None
     }
 
+    pub fn next(&self) -> bool{
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let mut pos = selection.selected();
+            pos = if pos == selection.n_items()-1 {0} else {pos+1};
+            if selection.select_item(pos,false){
+                if let Some(sel_obj) = selection.selected_item(){
+                    self.play();//we need it otherwise, it stucks.
+                    self.stop();
+                    self.play();
+                    return true;
+                }
+                else{return false;}
+            } else{ return false;}
+        } else{
+            println!("No item");
+            return false;
+        }
+    }
+
+    pub fn previous(&self) -> bool{
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let mut pos = selection.selected();
+            pos = if pos == 0 {selection.n_items()-1} else {pos-1};
+            println!("item: {}",selection.n_items());
+            println!("pos: {}",pos);
+            if selection.select_item(pos,false){
+                if let Some(sel_obj) = selection.selected_item(){
+                    self.play();//we need it otherwise, it stucks.
+                    self.stop();
+                    self.play();
+                    return true;
+                }
+                else{return false;} 
+            } else{return false}
+        }
+        else{
+            println!("No item");
+            return false;
+        }
+    }
+
     pub fn play(&self) -> bool{
         if let Some(path) = self.selected_path(){
             self.player.load(path);
@@ -280,6 +323,14 @@ impl Playlist{
         else{
             false
         }
+    }
+
+    pub fn pause(&self){
+        self.player.pause();
+    }
+
+    pub fn stop(&self){
+        self.player.stop();
     }
     /*
 

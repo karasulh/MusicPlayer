@@ -11,8 +11,8 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=music_player",
-                    "--package=music_player"
+                    //"--bin=music_player",
+                    //--package=music_player"
                 ],
                 "filter": {
                     "name": "music_player",

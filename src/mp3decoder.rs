@@ -1,6 +1,7 @@
 use std::io::{Read,Seek,SeekFrom};
 use std::time::Duration;
 use gio::File;
+use gtk4::is_initialized;
 use symphonia::core::codecs::{CODEC_TYPE_NULL, DecoderOptions, CODEC_TYPE_MP3, Decoder};
 //decode the frames of an MP3 file to suitabe format to be played by the OS
 use symphonia::core::io::{MediaSourceStream, MediaSourceStreamOptions}; 
@@ -26,7 +27,7 @@ pub struct mp3Decoder{ //Mp3Decoder<R:Read> //trait bounds
 
 impl mp3Decoder {
 
-    pub fn new(mut src:std::fs::File) -> Result<mp3Decoder,String>{
+    pub fn new(mut src:std::fs::File) -> Option<mp3Decoder>  /*Result<mp3Decoder,String>*/{
 
         //MediaSourceStream = std::io::BufReader
         let mss = MediaSourceStream::new(Box::new(src),Default::default());
@@ -44,9 +45,9 @@ impl mp3Decoder {
         //let track = format_reader.tracks().iter().find(|t| t.codec_params.codec != CODEC_TYPE_NULL).expect("no supported audio tracks");
         let track = format_reader.default_track().expect("There is not any track"); //It returns the first track
         if !is_mp3(track){
-            return Err(String::from("It is not mp3"));
+            //return Err(String::from("It is not mp3"));
+            //return None;
         }
-        println!("{:?}",track.codec_params);
         let dec_opts: DecoderOptions = Default::default();
         let mut decoder = symphonia::default::get_codecs()
                                                                 .make(&track.codec_params,&dec_opts)
@@ -79,15 +80,19 @@ impl mp3Decoder {
                 }
                 Err(err) => {
                     println!("Error in decoding mp3: {:?}",err);
-                    return Err(err.to_string());
+                    //return Err(err.to_string());
+                    //return None;
                 }
             }
         };
         let spec = decoded_audio_buf.spec().to_owned();
         let sample_buffer = get_buffer(decoded_audio_buf).unwrap();
 
-        Ok(mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
+        //Ok(mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
+        Some(mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
+        //mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0}
     }
+
 
 
 }
@@ -136,35 +141,41 @@ impl Iterator for mp3Decoder{
 
     fn next(&mut self) -> Option<f32>{
         if self.current_packet_frame_offset == self.sample_buffer.len(){
-            let mut decode_errors: usize = 0;
             //Decoding Loop: Get packet from media format(container),consume any new metadata, filter packet, decode packet into audio samples
             let decoded_audio_buf = loop{
-                let curr_packet_frame = self.format_reader.next_packet().unwrap();
-                while !self.format_reader.metadata().is_latest(){//consume the metadatas
-                    self.format_reader.metadata().pop(); 
-                }
-                match self.decoder.decode(&curr_packet_frame){
-                    Ok(decoded_audio_buf) => {
-                        /*
-                        match decoded_audio_buf{
-                            AudioBufferRef::F32(buf) => {
-                                let planes = buf.planes(); //audio plane = channel
-                                for  plane in planes.planes(){
-                                    for &sample in plane.iter(){
-                                        self.samples.push(sample);
-                                    } 
+                match self.format_reader.next_packet(){
+                    Ok(curr_packet_frame) => {
+                        while !self.format_reader.metadata().is_latest(){//consume the metadatas
+                            self.format_reader.metadata().pop(); 
+                        }
+                        match self.decoder.decode(&curr_packet_frame){
+                            Ok(decoded_audio_buf) => {
+                                /*
+                                match decoded_audio_buf{
+                                    AudioBufferRef::F32(buf) => {
+                                        let planes = buf.planes(); //audio plane = channel
+                                        for  plane in planes.planes(){
+                                            for &sample in plane.iter(){
+                                                self.samples.push(sample);
+                                            } 
+                                        }
+                                        break decoded_audio_buf;
+                                    }
+                                    _ => {}
                                 }
+                                */
                                 break decoded_audio_buf;
                             }
-                            _ => {}
+                            Err(err) => {
+                                println!("Error in decoding mp3: {:?}",err);
+                                return None;
+                            }
                         }
-                        */
-                        break decoded_audio_buf;
-                    }
+                    },
                     Err(err) => {
-                        println!("Error in decoding mp3: {:?}",err);
+                        println!("No next packet: {:?}",err);
                         return None;
-                    }
+                    } 
                 }
             };
             self.sample_buffer = get_buffer(decoded_audio_buf).unwrap();   

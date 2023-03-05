@@ -92,11 +92,24 @@ fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolB
             //if play_button.icon_name().unwrap() == GString::from(PLAY_MUSIC.to_string()){
                 play_button.set_icon_name(PAUSE_MUSIC);  
                 set_cover(&cover_copy, &playlist_copy);
+                cover_copy.show();
             } 
+            println!("should be changed icon to start");
         }
         else{
+            println!("should be changed icon to pause");
+            playlist_copy.pause();
             play_button.set_icon_name(PLAY_MUSIC);
         }    
+    });
+
+    let cover_copy = cover.clone();
+    let playlist_copy = Rc::clone(&playlist);
+    let play_button = musictoolbox.play_button.clone();
+    musictoolbox.stop_button.connect_clicked(move |_| {
+        playlist_copy.stop();
+        cover_copy.hide();
+        play_button.set_icon_name(PLAY_MUSIC);
     });
 
     let parent = window.clone();
@@ -108,6 +121,26 @@ fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolB
     let playlist_copy = Rc::clone(&playlist);
     musictoolbox.remove_button.connect_clicked(move|_|{
         playlist_copy.remove_selection();
+    });
+
+    let play_button_copy = musictoolbox.play_button.clone();
+    let cover_copy = cover.clone();
+    let playlist_copy = Rc::clone(&playlist);
+    musictoolbox.next_button.connect_clicked(move|_|{
+        playlist_copy.next();
+        play_button_copy.set_icon_name(PAUSE_MUSIC);
+        set_cover(&cover_copy, &playlist_copy);
+        cover_copy.show();
+    });
+
+    let play_button_copy = musictoolbox.play_button.clone();
+    let cover_copy = cover.clone();
+    let playlist_copy = Rc::clone(&playlist);
+    musictoolbox.prev_button.connect_clicked(move|_|{
+        playlist_copy.previous();
+        play_button_copy.set_icon_name(PAUSE_MUSIC);
+        set_cover(&cover_copy, &playlist_copy);
+        cover_copy.show();
     });
 
 }

@@ -1,8 +1,12 @@
 use std::fs::File;
 use std::io::BufReader;
+use std::ops::DerefMut;
 use std::path::{Path,PathBuf};
+use std::ptr::replace;
 use std::sync::{Arc,Condvar,Mutex};
 use std::thread;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use crossbeam::queue::SegQueue;
 
@@ -20,6 +24,7 @@ const DEFAULT_RATE:u32 = 44100;
 
 enum Action{
     Load(String),
+    Pause,
     Stop,
 }
 
@@ -59,59 +64,68 @@ impl Player{
             //because these variables are used in the initialization of the structure at the end of constructor
             let app_state = app_state.clone();
             let event_loop = event_loop.clone();
-            thread::spawn(move ||{
-                let mut buffer = [[0;2]; BUFFER_SIZE];//contains samples to be played
-                
-                //let mut playback = Playback::<[i16;2]>::new("MP3","MP3 Playback",DEFAULT_RATE); //object that allow us to play music on hardware
-                //let mut source = None;
 
+            thread::spawn(move ||{
+
+                let mut current_song_path: String = String::new();
+                let (_stream,stream_handle) = OutputStream::try_default().unwrap();
+                let sink = Sink::try_new(&stream_handle).unwrap(); //sink represents an audio track
                 let mut source;
 
                 loop{
                     if let Some(action) = event_loop.queue.pop(){
+
                         match action {
                             Action::Load(path) => {
-                                let file = File::open(path).expect("Failed to open path");   
-                                //let bufreader = BufReader::new(file);
+                                if(sink.is_paused() && path == current_song_path){
+                                    sink.play(); //resume to play the song which is paused 
+                                }
+                                else{
+                                    current_song_path = path.clone();
+                                    let file = File::open(path).expect("Failed to open path");   
+                                    
+                                    source = mp3Decoder::new(file).unwrap();
+                                    sink.append(source);
                                 
-                                let (_stream,stream_handle) = OutputStream::try_default().unwrap();
-                                let sink = Sink::try_new(&stream_handle).unwrap(); //sink represents an audio track
-                                source = mp3Decoder::new(file).unwrap();
-                                sink.append(source);
-                                //let rate_music = source.as_ref().map(|source| source.samples_rate()).unwrap_or(DEFAULT_RATE);
-                                //playback = Playback::new("MP3","MP3 Playback",rate_music); //Acc. to sample rate of the song, create a new Playback
+                                    sink.play();
+                                    println!("{}",sink.len());
+                                }
 
                                 //We can access the value inside mutex directly below because we access a field here in struct, Rust automatically dereference fields.
                                 app_state.lock().unwrap().stopped = false; //the same with below 2 lines
                                 //let mut mutex_guard = app_state.lock().unwrap(); 
                                 //mutex_guard.stopped = false; //mutex guard = scoped lock => automatically unlocked when going out of scope.
-
-                                //std::thread::sleep(std::time::Duration::from_secs(10));
-                                sink.sleep_until_end();
-                                //sink.play();
+                                
+                                *event_loop.playing.lock().unwrap() = true;
                             }
-                            Action::Stop => {}
+                            Action::Pause => {
+                                println!("Should be paused");
+                                sink.pause();
+                                app_state.lock().unwrap().stopped = true;
+                                *event_loop.playing.lock().unwrap() = false;
+                                
+                            }
+                            Action::Stop => {
+                                println!("Should be stopped");
+                                sink.stop();
+                                sink.clear();
+                                app_state.lock().unwrap().stopped = true;
+                                *event_loop.playing.lock().unwrap() = false;
+                                current_song_path = String::from("zzz");
+                            }
                         }
                     }
                     //MutexGuard implements Deref, so we access the value by '*'.
-                    /*
                     else if *event_loop.playing.lock().unwrap(){
-                        let mut written = false; //show it can play a sample
-                        if let Some(source) = source{
-                            let size = iter_to_buffer(source, &mut buffer); //take the value from the decoder and write them to buffer
-                            if size > 0 {
-                                //playback.write(&buffer[..size]); //play the sounds on our sound card. 
-                                written = true;
-                            }
-                        }
-                        if !written { //shows the end of the song
+
+                        let mut is_song_continue = true; //show it can play a sample
+                        if (sink.empty()){//if the song is finished
+                            println!("Song is finished");
+                            is_song_continue = false;
                             app_state.lock().unwrap().stopped = true;
                             *event_loop.playing.lock().unwrap() = false;
-                            source = None;
                         }
                     }
-                    */
-
                 }
             });
         }
@@ -121,19 +135,11 @@ impl Player{
     pub fn load(&self,path: String){
         self.event_loop.queue.push(Action::Load(path));
     }
+    pub fn pause(&self){
+        self.event_loop.queue.push(Action::Pause);
+    }
+    pub fn stop(&self){
+        self.event_loop.queue.push(Action::Stop);
+    }
 }
 
-/*
-fn iter_to_buffer<I:Iterator<Item = i16>>(iter: &mut I, buffer: &mut [[i16;2]; BUFFER_SIZE]) -> usize{
-    let mut iter = iter.take(BUFFER_SIZE);
-    let mut index = 0;
-    while let Some(sample1) = iter.next(){
-        if let Some(sample2) = iter.next(){//For 2 channel
-            buffer[index][0] = sample1;
-            buffer[index][1] = sample2;
-        }
-        index += 1;
-    }
-    index
-}
-*/
