@@ -260,6 +260,27 @@ impl Playlist{
         None
     }
     
+    fn selected_path(&self) -> Option<String>{
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let sel_pos = selection.selected();
+            let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
+            let row:Ref<Row> = boxed.borrow();
+            let path = row.col_path.clone();
+           return Some(path);
+        }
+        None
+    }
+
+    pub fn play(&self) -> bool{
+        if let Some(path) = self.selected_path(){
+            self.player.load(path);
+            true
+        }
+        else{
+            false
+        }
+    }
     /*
 
     pub fn remove_selection(&self){

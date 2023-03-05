@@ -5,6 +5,7 @@ mod playlist;
 use playlist::Playlist;
 
 mod mp3;
+mod mp3decoder;
 
 mod player;
 
@@ -53,7 +54,7 @@ fn build_ui(app: &Application){
 
     
     //let playlist2 = Rc::clone(&playlist);
-    connect_toolbox_events(&window,&musictoolbox,&playlist,&cover);
+    connect_toolbox_events(&window,&musictoolbox,&playlist,&cover,&state);
 
     let vert_box= Box::new(gtk4::Orientation::Vertical,5);
 
@@ -76,19 +77,23 @@ fn build_ui(app: &Application){
 
 
     
-fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolBox,playlist:&Rc<Playlist>,cover:&Image){
+fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolBox,playlist:&Rc<Playlist>,cover:&Image, state:&Arc<Mutex<State>>){
     //connect_clicked wants a function with static lifetime so by using 'move', we satifsy this, that is why we clone the variable.
     let window_copy = window.clone();
     musictoolbox.exit_button.connect_clicked(move|_|{window_copy.destroy();}); 
 
     let playlist_copy = Rc::clone(&playlist);
     let cover_copy = cover.clone();
+    let state_copy = Arc::clone(&state);
     let play_button = musictoolbox.play_button.clone(); //copy of the pointer of button
     musictoolbox.play_button.connect_clicked( move|_|{
-        if play_button.icon_name().unwrap() == GString::from(PLAY_MUSIC.to_string()){
-            play_button.set_icon_name(PAUSE_MUSIC);  
-            set_cover(&cover_copy, &playlist_copy);
-        }    
+        if state_copy.lock().unwrap().stopped {
+            if playlist_copy.play(){
+            //if play_button.icon_name().unwrap() == GString::from(PLAY_MUSIC.to_string()){
+                play_button.set_icon_name(PAUSE_MUSIC);  
+                set_cover(&cover_copy, &playlist_copy);
+            } 
+        }
         else{
             play_button.set_icon_name(PLAY_MUSIC);
         }    

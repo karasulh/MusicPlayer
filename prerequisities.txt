@@ -1,0 +1,5 @@
+1- Install GTK4 to computer:
+pacman -S mingw-w64-x86_64-gtk4
+
+2- Install pulseaudio to computer:
+pacman -S mingw-w64-x86_64-pulseaudio
