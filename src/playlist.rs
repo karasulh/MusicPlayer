@@ -13,8 +13,6 @@ use gio::ListStore; //new type
 use gtk4::ffi::GTK_RESPONSE_ACCEPT;
 use gtk4::ffi::GTK_RESPONSE_CANCEL;
 use gtk4::ffi::GtkBitset;
-use gtk4::ffi::gtk_bitset_iter_init_at;
-use gtk4::ffi::gtk_bitset_iter_init_first;
 use gtk4::{prelude::*,TreeView, TreeViewColumn,CellRendererText, CellRendererPixbuf,
     ColumnView,ColumnViewColumn, SingleSelection,SignalListItemFactory, ListItem, Image, Label};
 use gtk4::{FileChooserAction,FileChooserDialog,FileFilter,ResponseType};
@@ -253,7 +251,7 @@ impl Playlist{
     
     pub fn remove_selection(&self){
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let sel_pos = selection.selected();
             self.model.remove(sel_pos);
         }
@@ -261,7 +259,7 @@ impl Playlist{
 
     pub fn get_image(&self) -> Option<Image>{
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let sel_pos = selection.selected();
             let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
             let row:Ref<Row> = boxed.borrow();
@@ -273,7 +271,7 @@ impl Playlist{
     
     fn selected_path(&self) -> Option<String>{
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let sel_pos = selection.selected();
             let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
             let row:Ref<Row> = boxed.borrow();
@@ -285,11 +283,11 @@ impl Playlist{
 
     pub fn next(&self) -> bool{
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let mut pos = selection.selected();
             pos = if pos == selection.n_items()-1 {0} else {pos+1};
             if selection.select_item(pos,false){
-                if let Some(sel_obj) = selection.selected_item(){
+                if let Some(_) = selection.selected_item(){
                     self.play();//we need it otherwise, it stucks.
                     self.stop();
                     self.play();
@@ -305,13 +303,13 @@ impl Playlist{
 
     pub fn previous(&self) -> bool{
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let mut pos = selection.selected();
             pos = if pos == 0 {selection.n_items()-1} else {pos-1};
             println!("item: {}",selection.n_items());
             println!("pos: {}",pos);
             if selection.select_item(pos,false){
-                if let Some(sel_obj) = selection.selected_item(){
+                if let Some(_) = selection.selected_item(){
                     self.play();//we need it otherwise, it stucks.
                     self.stop();
                     self.play();
@@ -353,7 +351,7 @@ impl Playlist{
 
     pub fn duration_of_song_sec(&self) -> Option<u64>{
         let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
-        if let Some(sel_obj) = selection.selected_item(){
+        if let Some(_) = selection.selected_item(){
             let sel_pos = selection.selected();
             let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
             let row:Ref<Row> = boxed.borrow();
@@ -367,9 +365,26 @@ impl Playlist{
         }
         None
     }
+   
+}
 
+fn compute_duration(song_path:String) -> Option<u64>{
+    let duration_result = Arc::new(Mutex::new(0));
+    let duration_result_copy = Arc::clone(&duration_result); 
+    let handle = thread::spawn(move||{ //not to wait main thread too much, we use thread for calculations. 
+        let duration = mp3_duration::from_path(song_path);
+        *duration_result_copy.lock().unwrap() = match duration{
+            Ok(duration_res) => duration_res.as_secs(),
+            Err(duration_err)=> duration_err.at_duration.as_secs(),//in Err case, actually there is result.
+        };
+    });
+    handle.join().unwrap();
+    let duration_result = *duration_result.lock().unwrap();
+    Some(duration_result)
+}
+
+    //With some deprecated methods of GTK4 
     /*
-
     pub fn remove_selection(&self){
         let selection = self.treeview.get_selection();
         if let Some((,iter)) = selection.get_selected(){
@@ -457,20 +472,3 @@ impl Playlist{
         &self.treeview
     }
     */
-   
-}
-
-fn compute_duration(song_path:String) -> Option<u64>{
-    let mut duration_result = Arc::new(Mutex::new(0));
-    let duration_result_copy = Arc::clone(&duration_result); 
-    let handle = thread::spawn(move||{ //not to wait main thread too much, we use thread for calculations. 
-        let duration = mp3_duration::from_path(song_path);
-        *duration_result_copy.lock().unwrap() = match duration{
-            Ok(duration_res) => duration_res.as_secs(),
-            Err(duration_err)=> duration_err.at_duration.as_secs(),//in Err case, actually there is result.
-        };
-    });
-    handle.join().unwrap();
-    let duration_result = *duration_result.lock().unwrap();
-    Some(duration_result)
-}

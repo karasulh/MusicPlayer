@@ -1,8 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::ops::DerefMut;
 use std::path::{Path,PathBuf};
-use std::ptr::replace;
 use std::sync::{Arc,Condvar,Mutex};
 use std::thread;
 use std::rc::Rc;
@@ -10,13 +8,7 @@ use std::cell::RefCell;
 
 use crossbeam::queue::SegQueue;
 
-use crate::mp3::Mp3Decoder;
-//use pulse_simple::Playback;
-
-//use mp3::Mp3Decoder;
-//use self::Action::*;
-
-use rodio::{OutputStream,source::Source,Decoder,Sink};
+use rodio::{OutputStream,Sink};
 use crate::mp3decoder::mp3Decoder;
 
 
@@ -88,7 +80,7 @@ impl Player{
 
                         match action {
                             Action::Load(path) => {
-                                if(sink.is_paused() && path == current_song_path){
+                                if sink.is_paused() && path == current_song_path {
                                     sink.play(); //resume to play the song which is paused 
                                 }
                                 else{
@@ -98,8 +90,8 @@ impl Player{
                                     source = mp3Decoder::new(file).unwrap();
                                     sink.append(source);
 
-                                    let song_path = current_song_path.clone();
-                                    let song_duration = compute_duration(song_path).unwrap();
+                                    //let song_path = current_song_path.clone();
+                                    //let song_duration = compute_duration(song_path).unwrap();
                                 
                                     sink.play();
                                     println!("{}",sink.len());
@@ -130,12 +122,10 @@ impl Player{
                         }
                     }
                     //MutexGuard implements Deref, so we access the value by '*'.
-                    else if *event_loop.playing.lock().unwrap(){
+                    else if *event_loop.playing.lock().unwrap(){ //if the song continues
 
-                        let mut is_song_continue = true; //show it can play a sample
                         if sink.empty(){//if the song is finished
                             println!("Song is finished");
-                            is_song_continue = false;
                             app_state.lock().unwrap().stopped = true;
                             *event_loop.playing.lock().unwrap() = false;
                             block();//blocks this thread to save cpu which is worked a lot due to loop

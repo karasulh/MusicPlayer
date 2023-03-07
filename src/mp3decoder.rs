@@ -1,7 +1,5 @@
-use std::io::{Read,Seek,SeekFrom};
 use std::time::Duration;
 use gio::File;
-use gtk4::is_initialized;
 use symphonia::core::codecs::{CODEC_TYPE_NULL, DecoderOptions, CODEC_TYPE_MP3, Decoder};
 //decode the frames of an MP3 file to suitabe format to be played by the OS
 use symphonia::core::io::{MediaSourceStream, MediaSourceStreamOptions}; 
@@ -10,9 +8,6 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::formats::{FormatOptions, Track, FormatReader};
 use symphonia::core::audio::{AudioBufferRef, SampleBuffer, SignalSpec};
 use rodio::Source;
-
-use crate::mp3;
-//use to_millis; //reach the function in main since use statements are relative to the root of the crate
 
 pub struct mp3Decoder{ //Mp3Decoder<R:Read> //trait bounds
     pub decoder: Box<dyn Decoder>,
@@ -26,7 +21,7 @@ pub struct mp3Decoder{ //Mp3Decoder<R:Read> //trait bounds
 
 impl mp3Decoder {
 
-    pub fn new(mut src:std::fs::File) -> Option<mp3Decoder>  /*Result<mp3Decoder,String>*/{
+    pub fn new(src:std::fs::File) -> Option<mp3Decoder>  /*Result<mp3Decoder,String>*/{
 
         //MediaSourceStream = std::io::BufReader
         let mss = MediaSourceStream::new(Box::new(src),Default::default());

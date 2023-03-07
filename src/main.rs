@@ -1,12 +1,16 @@
+#![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(unused_assignments)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 mod toolbox;
 use toolbox::MusicToolBox;
 
 mod playlist;
 use playlist::Playlist;
 
-mod mp3;
 mod mp3decoder;
-
 mod player;
 
 use gtk4::{prelude::*, Image, Orientation,Box, Adjustment, Scale, Application, ApplicationWindow};
@@ -78,7 +82,7 @@ fn connect_toolbox_events(window: &ApplicationWindow,musictoolbox: &MusicToolBox
     let window_copy = window.clone();
     musictoolbox.exit_button.connect_clicked(move|_|{window_copy.destroy();}); 
 
-    let mut current_song_duration_sec= Arc::new(Mutex::new(0));
+    let current_song_duration_sec= Arc::new(Mutex::new(0));
     
     let current_song_duration_sec_copy = Arc::clone(&current_song_duration_sec);
     let playlist_copy = Rc::clone(&playlist);
