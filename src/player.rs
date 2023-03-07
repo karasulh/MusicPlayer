@@ -28,6 +28,7 @@ enum Action{
 
 #[derive(Clone)]
 struct EventLoop {
+    condition_variable: Arc<(Mutex<bool>,Condvar)>,//wake the thread which is sleeping
     queue: Arc<SegQueue<Action>>,
     playing: Arc<Mutex<bool>>,
 }
@@ -44,6 +45,7 @@ struct EventLoop {
 impl EventLoop{
     fn new()->Self{
         EventLoop{
+            condition_variable: Arc::new((Mutex::new(false),Condvar::new())),
             queue: Arc::new(SegQueue::new()),
             playing: Arc::new(Mutex::new(false)),
         }
@@ -62,8 +64,19 @@ impl Player{
             //because these variables are used in the initialization of the structure at the end of constructor
             let app_state = app_state.clone();
             let event_loop = event_loop.clone();
+            let condition_variable = event_loop.condition_variable.clone();
 
             thread::spawn(move ||{
+
+                //block the thread when it has nothing to do
+                let block = || {
+                    let (ref lock,ref condition_variable) = *condition_variable;
+                    let mut started = lock.lock().unwrap();
+                    *started = false;
+                    while !*started {//wait until started = true
+                        started = condition_variable.wait(started).unwrap();
+                    }
+                };
 
                 let mut current_song_path: String = String::new();
                 let (_stream,stream_handle) = OutputStream::try_default().unwrap();
@@ -120,12 +133,16 @@ impl Player{
                     else if *event_loop.playing.lock().unwrap(){
 
                         let mut is_song_continue = true; //show it can play a sample
-                        if (sink.empty()){//if the song is finished
+                        if sink.empty(){//if the song is finished
                             println!("Song is finished");
                             is_song_continue = false;
                             app_state.lock().unwrap().stopped = true;
                             *event_loop.playing.lock().unwrap() = false;
+                            block();//blocks this thread to save cpu which is worked a lot due to loop
                         }
+                    }
+                    else{
+                        block();
                     }
                 }
             });
@@ -143,6 +160,11 @@ impl Player{
         self.event_loop.queue.push(Action::Stop);
     }
 
+    pub fn get_condition_var(&self) -> Arc<(Mutex<bool>, Condvar)>{
+        let cond_var = self.event_loop.condition_variable.clone();
+        cond_var
+    }
+
 }
 
 pub fn compute_duration(song_path:String) -> Option<u64>{
@@ -152,7 +174,7 @@ pub fn compute_duration(song_path:String) -> Option<u64>{
         Ok(duration_res) => duration_res.as_secs(),
         Err(duration_err)=> duration_err.at_duration.as_secs(),//in Err case, actually there is result.
     };
-    println!("Song duration: {}",duration_result);
+    //println!("Song duration: {}",duration_result);
     Some(duration_result)
 }
 

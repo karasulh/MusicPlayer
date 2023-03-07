@@ -329,6 +329,13 @@ impl Playlist{
     pub fn play(&self) -> bool{
         if let Some(path) = self.selected_path(){
             self.player.load(path);
+
+            let cond_var = self.player.get_condition_var();//self.player.event_loop.condition_variable.clone();
+            let (ref lock,ref condition_variable) = *cond_var;
+            let mut started = lock.lock().unwrap();
+            *started = true;
+            condition_variable.notify_one();
+
             true
         }
         else{
