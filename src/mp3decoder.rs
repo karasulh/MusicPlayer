@@ -15,7 +15,6 @@ use crate::mp3;
 //use to_millis; //reach the function in main since use statements are relative to the root of the crate
 
 pub struct mp3Decoder{ //Mp3Decoder<R:Read> //trait bounds
-    pub samples: Vec<f32>,
     pub decoder: Box<dyn Decoder>,
     pub format_reader: Box<dyn FormatReader>,
     pub sample_buffer:SampleBuffer<f32>,
@@ -46,13 +45,12 @@ impl mp3Decoder {
         let track = format_reader.default_track().expect("There is not any track"); //It returns the first track
         if !is_mp3(track){
             //return Err(String::from("It is not mp3"));
-            //return None;
+            return None;
         }
         let dec_opts: DecoderOptions = Default::default();
         let mut decoder = symphonia::default::get_codecs()
                                                                 .make(&track.codec_params,&dec_opts)
                                                                 .expect("unsupported codec");
-        let mut samples = Vec::new();
         
         //Decoding Loop: Get packet from media format(container),consume any new metadata, filter packet, decode packet into audio samples
         let decoded_audio_buf = loop{
@@ -81,16 +79,16 @@ impl mp3Decoder {
                 Err(err) => {
                     println!("Error in decoding mp3: {:?}",err);
                     //return Err(err.to_string());
-                    //return None;
+                    return None;
                 }
             }
         };
         let spec = decoded_audio_buf.spec().to_owned();
         let sample_buffer = get_buffer(decoded_audio_buf).unwrap();
 
-        //Ok(mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
-        Some(mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
-        //mp3Decoder{samples,decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0}
+        //Ok(mp3Decoder{decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
+        Some(mp3Decoder{decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0})
+        //mp3Decoder{decoder,format_reader,sample_buffer,spec,current_packet_frame_offset:0}
     }
 
 

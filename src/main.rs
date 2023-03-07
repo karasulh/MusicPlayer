@@ -10,7 +10,6 @@ mod mp3decoder;
 mod player;
 
 use gtk4::{prelude::*, Image, Orientation,Box, Adjustment, Scale, Application, ApplicationWindow};
-use gtk4::glib::GString;
 
 use std::path::{Path, PathBuf};
 
@@ -51,20 +50,17 @@ fn build_ui(app: &Application){
     let state: Arc<Mutex<State>> = Arc::new(Mutex::new(State{stopped:true}));
     let playlist = Rc::new(Playlist::new(state.clone()));
     let cover = Image::new();
+    let adjustment = Adjustment::new(0.0,0.0,10.0,0.0,0.0,0.0);
 
-    
-    //let playlist2 = Rc::clone(&playlist);
     connect_toolbox_events(&window,&musictoolbox,&playlist,&cover,&state);
 
     let vert_box= Box::new(gtk4::Orientation::Vertical,5);
-
     vert_box.append(musictoolbox.get_tool_box());
 
     cover.set_from_file(Some("image.jpg"));
     cover.set_pixel_size(250);
     vert_box.append(&cover);
 
-    let adjustment = Adjustment::new(0.0,0.0,10.0,0.0,0.0,0.0);
     let scale = Scale::new(Orientation::Horizontal,Some(&adjustment));
     scale.set_draw_value(true);
     vert_box.append(&scale);
@@ -77,11 +73,14 @@ fn build_ui(app: &Application){
 
 
     
-fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolBox,playlist:&Rc<Playlist>,cover:&Image, state:&Arc<Mutex<State>>){
+fn connect_toolbox_events(window: &ApplicationWindow,musictoolbox: &MusicToolBox,playlist:&Rc<Playlist>,cover:&Image, state:&Arc<Mutex<State>>){
     //connect_clicked wants a function with static lifetime so by using 'move', we satifsy this, that is why we clone the variable.
     let window_copy = window.clone();
     musictoolbox.exit_button.connect_clicked(move|_|{window_copy.destroy();}); 
 
+    let mut current_song_duration_sec= Arc::new(Mutex::new(0));
+    
+    let current_song_duration_sec_copy = Arc::clone(&current_song_duration_sec);
     let playlist_copy = Rc::clone(&playlist);
     let cover_copy = cover.clone();
     let state_copy = Arc::clone(&state);
@@ -93,6 +92,7 @@ fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolB
                 play_button.set_icon_name(PAUSE_MUSIC);  
                 set_cover(&cover_copy, &playlist_copy);
                 cover_copy.show();
+                *current_song_duration_sec_copy.lock().unwrap() = playlist_copy.duration_of_song_sec().unwrap();
             } 
             println!("should be changed icon to start");
         }
@@ -143,7 +143,21 @@ fn connect_toolbox_events(window: & ApplicationWindow,musictoolbox: & MusicToolB
         cover_copy.show();
     });
 
+    /* //Changing Adjustment Bar
+    let playlist_copy = Rc::clone(&playlist);     
+    let adjustment_copy = adjustment.clone();
+    let state_copy = Arc::clone(&state);
+    let current_song_duration_sec_copy = Arc::clone(&current_song_duration_sec);
+    // glib::source::timeout_add_seconds(3, move ||{
+    //     //let sec = *current_song_duration_sec_copy.lock().unwrap() as f64;
+    //     adjustment_copy.set_upper(5.0);
+    //     adjustment_copy.set_value(10.0);
+    //     glib::source::Continue(true)
+    // });
+    */
+
 }
+
 
 fn show_open_dialog(parent: &ApplicationWindow ,playlist: &Rc<Playlist>){
 

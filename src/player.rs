@@ -19,8 +19,6 @@ use crate::mp3::Mp3Decoder;
 use rodio::{OutputStream,source::Source,Decoder,Sink};
 use crate::mp3decoder::mp3Decoder;
 
-const BUFFER_SIZE:usize = 1000; //# of samples we'll decode and play to avoid usage of all CPU
-const DEFAULT_RATE:u32 = 44100;
 
 enum Action{
     Load(String),
@@ -86,6 +84,9 @@ impl Player{
                                     
                                     source = mp3Decoder::new(file).unwrap();
                                     sink.append(source);
+
+                                    let song_path = current_song_path.clone();
+                                    let song_duration = compute_duration(song_path).unwrap();
                                 
                                     sink.play();
                                     println!("{}",sink.len());
@@ -141,5 +142,17 @@ impl Player{
     pub fn stop(&self){
         self.event_loop.queue.push(Action::Stop);
     }
+
+}
+
+pub fn compute_duration(song_path:String) -> Option<u64>{
+    let mut duration_result = 0;
+    let duration = mp3_duration::from_path(song_path);
+    duration_result = match duration{
+        Ok(duration_res) => duration_res.as_secs(),
+        Err(duration_err)=> duration_err.at_duration.as_secs(),//in Err case, actually there is result.
+    };
+    println!("Song duration: {}",duration_result);
+    Some(duration_result)
 }
 

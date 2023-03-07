@@ -33,6 +33,9 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use std::thread;
+use sscanf;
+
 use std::sync::{Arc,Mutex};
 use crate::player::Player;
 use crate::State;
@@ -45,7 +48,8 @@ const GENRE_COLUMN: u32 = 4;
 const YEAR_COLUMN: u32 = 5;
 const TRACK_COLUMN: u32 = 6;
 const PATH_COLUMN: u32 = 7;
-const PIXBUF_COLUMN: u32 = 8;
+const DURATION_COLUMN: u32 = 8;
+const PIXBUF_COLUMN: u32 = 9;
 
 const IMAGE_SIZE: i32 = 256;
 const THUMBNAIL_SIZE: i32 =64;
@@ -82,6 +86,7 @@ struct Row{
     col_year:String,
     col_track:String,
     col_path:String,
+    col_duration:String,
     col_pixbuf:Image, 
     //col_pixbuf:Pixbuf, 
 }
@@ -119,6 +124,7 @@ impl Playlist{
         Self::add_text_column(columnview,"Year",YEAR_COLUMN as u32);
         Self::add_text_column(columnview,"Track",TRACK_COLUMN as u32);
         Self::add_text_column(columnview,"Path",PATH_COLUMN as u32);
+        Self::add_text_column(columnview,"Duration",DURATION_COLUMN as u32);
         Self::add_pixbuff_column(columnview,PIXBUF_COLUMN as u32,Invisible);
     }
 
@@ -139,6 +145,7 @@ impl Playlist{
                 YEAR_COLUMN => row.col_year.clone(),
                 TRACK_COLUMN => row.col_track.clone(),
                 PATH_COLUMN => row.col_path.clone(),
+                DURATION_COLUMN => row.col_duration.clone(),
                 _ => String::from(""),
             };
             let label = Label::new(Some(&column_of_row));
@@ -207,6 +214,7 @@ impl Playlist{
             col_year: String::from(""),
             col_track: String::from(""),
             col_path: String::from(""),
+            col_duration: String::from(""),
             col_pixbuf: Image::new(),
         };
         let filename = path.file_stem().unwrap_or_default().to_str().unwrap_or_default();
@@ -218,8 +226,10 @@ impl Playlist{
             let genre = tag.genre().unwrap_or("(no genre)");
             let year = tag.year().map(|year| year.to_string()).unwrap_or("(no year)".to_string());
             let track = tag.track().map(|track| track.to_string()).unwrap_or("??".to_string());
-            let total_tracks = tag.total_tracks().map(|total_tracks|total_tracks.to_string()).unwrap_or("??".to_string());
-            let track_value = format!("{} / {}",track,total_tracks);
+            //let total_tracks = tag.total_tracks().map(|total_tracks|total_tracks.to_string()).unwrap_or("??".to_string());
+            //let track_value = format!("{} / {}",track,total_tracks);
+            let duration = compute_duration(path.to_str().unwrap_or_default().to_string()).unwrap();
+            let duration_as_time = format!("{}:{}",duration/60,duration%60);
 
             self.set_pixbuf(&mut music_item_for_one_row, &tag);
 
@@ -229,6 +239,7 @@ impl Playlist{
             music_item_for_one_row.col_genre = genre.to_string();
             music_item_for_one_row.col_year = year.to_string();
             music_item_for_one_row.col_track = track.to_string();
+            music_item_for_one_row.col_duration = duration_as_time;
 
         }
         else{
@@ -332,6 +343,24 @@ impl Playlist{
     pub fn stop(&self){
         self.player.stop();
     }
+
+    pub fn duration_of_song_sec(&self) -> Option<u64>{
+        let selection = self.treeview.model().unwrap().downcast::<SingleSelection>().unwrap();
+        if let Some(sel_obj) = selection.selected_item(){
+            let sel_pos = selection.selected();
+            let boxed = self.model.item(sel_pos).unwrap().downcast::<BoxedAnyObject>().unwrap();
+            let row:Ref<Row> = boxed.borrow();
+            let duration_as_string = row.col_duration.clone();
+            let parsed = sscanf::sscanf!(duration_as_string,"{}:{}",u64,u64);
+            let duration = parsed.unwrap();
+            let duration = duration.0*60+duration.1;
+            //let duration: u64 = duration_as_string.parse().unwrap();
+            println!("duration of song: {}",duration);
+           return Some(duration);
+        }
+        None
+    }
+
     /*
 
     pub fn remove_selection(&self){
@@ -424,3 +453,17 @@ impl Playlist{
    
 }
 
+fn compute_duration(song_path:String) -> Option<u64>{
+    let mut duration_result = Arc::new(Mutex::new(0));
+    let duration_result_copy = Arc::clone(&duration_result); 
+    let handle = thread::spawn(move||{ //not to wait main thread too much, we use thread for calculations. 
+        let duration = mp3_duration::from_path(song_path);
+        *duration_result_copy.lock().unwrap() = match duration{
+            Ok(duration_res) => duration_res.as_secs(),
+            Err(duration_err)=> duration_err.at_duration.as_secs(),//in Err case, actually there is result.
+        };
+    });
+    handle.join().unwrap();
+    let duration_result = *duration_result.lock().unwrap();
+    Some(duration_result)
+}
