@@ -61,7 +61,7 @@ fn build_ui(app: &Application){
     let vert_box= Box::new(gtk4::Orientation::Vertical,5);
     vert_box.append(musictoolbox.get_tool_box());
 
-    cover.set_from_file(Some("image.jpg"));
+    cover.set_from_file(Some("pictures/image.jpg"));
     cover.set_pixel_size(250);
     vert_box.append(&cover);
 
@@ -191,7 +191,7 @@ fn set_cover(cover: &Image, playlist: &Rc<Playlist>){
         cover.set_from_paintable(image.paintable().as_ref());
     }
     else{
-        cover.set_from_file(Some("image.jpg"));
+        cover.set_from_file(Some("pictures/image.jpg"));
         cover.set_pixel_size(250);
     }
 }
