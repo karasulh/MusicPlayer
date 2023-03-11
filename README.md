@@ -1,6 +1,8 @@
 # MP3 Player With GTK4 Library
 It is a Rust project which implements GTK4 (UI) library with the ability to play MP3 songs. It is not last version and it is open for improvement because it has missing parts which I will try to complete in my free time.
 
+![player](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player.png)
+
 ---
 
 ## The Files in Project
@@ -20,11 +22,15 @@ It is a Rust project which implements GTK4 (UI) library with the ability to play
 `pacman -S mingw-w64-x86_64-gtk4`
 Check the gtk4 official website.
 
+![player2](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player2.png)
+
 1. Add a new song to list with the 'open folder' button by selecting.
 2. Play the songs, pause the songs and stop the songs. To play selected song, you must stop the current one.
 3. Press the next and previous buttons to skip the song and play the new song in the list.
 4. Delete the songs from the list with "--" button.
 5. Close the player with "x" button.
+
+![player3](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player3.png)
 
 -If the song has a picture, then it will show the current song's picture on cover.
 -The adjustment bar is not functional now.
@@ -34,10 +40,3 @@ Check the gtk4 official website.
 -I benefited the logic when starting this mp3 player from the book of Antoni Boucher by Packt Publishing.
 
 ---
-
-![player](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player.png)
-![player2](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player2.png)
-![player3](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player3.png)
-
-
-
