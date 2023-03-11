@@ -35,9 +35,9 @@ Check the gtk4 official website.
 
 ---
 
-![player]()
-![player2]()
-![player3]()
+![player](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player.png)
+![player2](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player2.png)
+![player3](https://github.com/karasulh/Music_Player_Pc_Application/blob/main/pictures/player3.png)
 
 
 
