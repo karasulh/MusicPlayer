@@ -38,6 +38,6 @@ Check the gtk4 official website.
 
 - I use threads somewhere and condition variables for multithread to prevent the much usage of CPU when not playing.
 
-- I benefited the logic when starting this mp3 player from the book of Antoni Boucher by Packt Publishing.
+- I benefited the logic when starting this mp3 player from the "book of Antoni Boucher by Packt Publishing".
 
 ---
